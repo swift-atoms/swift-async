@@ -1,5 +1,5 @@
 import Async
-import Ownership_Slot
+import Ownership
 import Testing
 
 extension Benchmark {

@@ -1,5 +1,5 @@
 import Async_Test_Support
-import Ownership_Slot
+import Ownership
 import Testing
 
 @Suite
