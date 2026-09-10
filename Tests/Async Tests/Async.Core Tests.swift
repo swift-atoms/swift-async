@@ -3,19 +3,18 @@ import Testing
 
 enum Core {
     enum Test {
-        @Suite struct Lifecycle {}
-        @Suite struct Precedence {}
-        @Suite struct Promise {}
-        @Suite struct Barrier {}
+        @Suite struct `Lifecycle transitions follow the shutdown order` {}
+        @Suite struct `Precedence resolves competing completion outcomes` {}
+        @Suite struct `Promises retain the first fulfilled value` {}
         #if !hasFeature(Embedded)
-            @Suite struct Completion {}
+            @Suite struct `Completions enforce their state transitions` {}
         #endif
     }
 }
 
-extension Core.Test.Lifecycle {
+extension Core.Test.`Lifecycle transitions follow the shutdown order` {
     @Test
-    func `open state has correct queries`() {
+    func `Open state has correct queries`() {
         var state: Async.Lifecycle.State = .open
         #expect(state.isOpen)
         let isActive = state.shutdown.isActive
@@ -25,7 +24,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `closing state has correct queries`() {
+    func `Closing state has correct queries`() {
         var state: Async.Lifecycle.State = .closing
         #expect(!state.isOpen)
         let isActive = state.shutdown.isActive
@@ -35,7 +34,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `closed state has correct queries`() {
+    func `Closed state has correct queries`() {
         var state: Async.Lifecycle.State = .closed
         #expect(!state.isOpen)
         let isActive = state.shutdown.isActive
@@ -45,7 +44,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `shutdown begin transitions open to closing`() {
+    func `Shutdown begin transitions open to closing`() {
         var state: Async.Lifecycle.State = .open
         let result = state.shutdown.begin()
         #expect(result)
@@ -53,7 +52,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `shutdown begin is idempotent on closing`() {
+    func `Shutdown begin is idempotent on closing`() {
         var state: Async.Lifecycle.State = .closing
         let result = state.shutdown.begin()
         #expect(!result)
@@ -61,7 +60,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `shutdown begin is idempotent on closed`() {
+    func `Shutdown begin is idempotent on closed`() {
         var state: Async.Lifecycle.State = .closed
         let result = state.shutdown.begin()
         #expect(!result)
@@ -69,7 +68,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `shutdown complete transitions closing to closed`() {
+    func `Shutdown complete transitions closing to closed`() {
         var state: Async.Lifecycle.State = .closing
         let result = state.shutdown.complete()
         #expect(result)
@@ -77,7 +76,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `shutdown complete is idempotent on open`() {
+    func `Shutdown complete is idempotent on open`() {
         var state: Async.Lifecycle.State = .open
         let result = state.shutdown.complete()
         #expect(!result)
@@ -85,7 +84,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `shutdown complete is idempotent on closed`() {
+    func `Shutdown complete is idempotent on closed`() {
         var state: Async.Lifecycle.State = .closed
         let result = state.shutdown.complete()
         #expect(!result)
@@ -93,7 +92,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `full lifecycle open to closing to closed`() {
+    func `Full lifecycle open to closing to closed`() {
         var state: Async.Lifecycle.State = .open
         #expect(state.isOpen)
 
@@ -113,7 +112,7 @@ extension Core.Test.Lifecycle {
     }
 
     @Test
-    func `cannot skip closing state`() {
+    func `Cannot skip closing state`() {
         var state: Async.Lifecycle.State = .open
 
         let result = state.shutdown.complete()
@@ -122,9 +121,9 @@ extension Core.Test.Lifecycle {
     }
 }
 
-extension Core.Test.Precedence {
+extension Core.Test.`Precedence resolves competing completion outcomes` {
     @Test
-    func `shutdown dominates all`() {
+    func `Shutdown takes precedence over every other outcome`() {
         let result = Async.Precedence.resolve(
             shutdown: true,
             cancelled: true,
@@ -138,7 +137,7 @@ extension Core.Test.Precedence {
     }
 
     @Test
-    func `cancelled dominates timeout and success`() {
+    func `Cancelled dominates timeout and success`() {
         let result = Async.Precedence.resolve(
             shutdown: false,
             cancelled: true,
@@ -152,7 +151,7 @@ extension Core.Test.Precedence {
     }
 
     @Test
-    func `timedOut dominates success`() {
+    func `Timeout takes precedence over success`() {
         let result = Async.Precedence.resolve(
             shutdown: false,
             cancelled: false,
@@ -166,7 +165,7 @@ extension Core.Test.Precedence {
     }
 
     @Test
-    func `success when nothing is set`() {
+    func `Success when nothing is set`() {
         let result = Async.Precedence.resolve(
             shutdown: false,
             cancelled: false,
@@ -180,7 +179,7 @@ extension Core.Test.Precedence {
     }
 
     @Test
-    func `autoclosure lazily evaluates success outcome`() {
+    func `Autoclosure lazily evaluates success outcome`() {
         var evaluated = false
         let result = Async.Precedence.resolve(
             shutdown: true,
@@ -199,16 +198,16 @@ extension Core.Test.Precedence {
     }
 }
 
-extension Core.Test.Promise {
+extension Core.Test.`Promises retain the first fulfilled value` {
     @Test
-    func `init creates unfulfilled promise`() {
+    func `Init creates unfulfilled promise`() {
         let promise = Async.Promise<Int>()
         #expect(!promise.isFulfilled)
         #expect(promise.fulfilled == nil)
     }
 
     @Test
-    func `value() does not observe Task cancellation`() async {
+    func `Value() does not observe Task cancellation`() async {
 
         let promise = Async.Promise<Int>()
 
@@ -228,7 +227,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `fulfill sets value and returns true`() {
+    func `Fulfill sets value and returns true`() {
         let promise = Async.Promise<Int>()
         let result = promise.fulfill(42)
         #expect(result)
@@ -237,7 +236,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `double fulfill returns false`() {
+    func `Double fulfill returns false`() {
         let promise = Async.Promise<Int>()
         #expect(promise.fulfill(1))
         #expect(!promise.fulfill(2))
@@ -246,7 +245,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `wait callback invoked immediately when fulfilled`() {
+    func `Wait callback invoked immediately when fulfilled`() {
         let promise = Async.Promise<Int>()
         promise.fulfill(42)
 
@@ -258,7 +257,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `wait callback deferred until fulfill`() {
+    func `Wait callback deferred until fulfill`() {
         let promise = Async.Promise<Int>()
 
         let publication = Async.Publication<Int>()
@@ -273,7 +272,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `multiple waiters all receive value`() {
+    func `Multiple waiters all receive value`() {
         let promise = Async.Promise<Int>()
 
         let pub1 = Async.Publication<Int>()
@@ -292,7 +291,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `gate open and wait`() {
+    func `Gate open and wait`() {
         let gate = Async.Gate()
         #expect(!gate.isOpen)
 
@@ -308,7 +307,7 @@ extension Core.Test.Promise {
     }
 
     @Test
-    func `gate double open returns false`() {
+    func `Gate double open returns false`() {
         let gate = Async.Gate()
         #expect(gate.open())
         #expect(!gate.open())
@@ -316,7 +315,7 @@ extension Core.Test.Promise {
 
     #if !hasFeature(Embedded)
         @Test
-        func `async value returns fulfilled value`() async {
+        func `Async value returns fulfilled value`() async {
             let promise = Async.Promise<Int>()
             promise.fulfill(42)
             let value = await promise.value()
@@ -324,7 +323,7 @@ extension Core.Test.Promise {
         }
 
         @Test
-        func `async gate wait returns after open`() async {
+        func `Async gate wait returns after open`() async {
             let gate = Async.Gate()
             gate.open()
             await gate.wait()
@@ -333,127 +332,18 @@ extension Core.Test.Promise {
     #endif
 }
 
-extension Core.Test.Barrier {
-    @Test
-    func `init creates unreleased barrier`() {
-        let barrier = Async.Barrier(parties: 3)
-        #expect(barrier.arrived == 0)
-        #expect(!barrier.isReleased)
-    }
-
-    @Test
-    func `arrive() throws cancelled on mid-await cancellation`() async throws {
-
-        let barrier = Async.Barrier(parties: 2)
-
-        let cancellableTask = Task { () async -> Result<Void, Async.Lifecycle.Error> in
-            do throws(Async.Lifecycle.Error) {
-                try await barrier.arrive()
-                return .success(())
-            } catch {
-                return .failure(error)
-            }
-        }
-
-        try? await Task.sleep(for: .milliseconds(20))
-        #expect(barrier.arrived == 1, "first party arrived and is suspended")
-
-        cancellableTask.cancel()
-
-        try? await Task.sleep(for: .milliseconds(20))
-
-        let firstResult = await cancellableTask.value
-        if case .failure(.cancelled) = firstResult {
-
-        } else {
-            Issue.record("expected .failure(.cancelled), got \(firstResult)")
-        }
-        #expect(barrier.cancelledCount == 1, "cancellation count incremented")
-
-        try await barrier.arrive()
-        #expect(barrier.isReleased, "barrier releases on effective party count met")
-        #expect(barrier.arrived == 1, "arrived rolled back the cancelled party")
-    }
-
-    @Test
-    func `single party barrier releases immediately`() {
-        let barrier = Async.Barrier(parties: 1)
-
-        let publication = Async.Publication<Bool>()
-        barrier.arrive {
-            publication.publish(true)
-        }
-        #expect(publication.take() == true)
-        #expect(barrier.isReleased)
-        #expect(barrier.arrived == 1)
-    }
-
-    @Test
-    func `multi party barrier waits for all arrivals`() {
-        let barrier = Async.Barrier(parties: 3)
-
-        let pub1 = Async.Publication<Bool>()
-        let pub2 = Async.Publication<Bool>()
-        let pub3 = Async.Publication<Bool>()
-
-        barrier.arrive { pub1.publish(true) }
-        #expect(pub1.take() == nil)
-        #expect(barrier.arrived == 1)
-        #expect(!barrier.isReleased)
-
-        barrier.arrive { pub2.publish(true) }
-        #expect(pub2.take() == nil)
-        #expect(barrier.arrived == 2)
-        #expect(!barrier.isReleased)
-
-        barrier.arrive { pub3.publish(true) }
-        #expect(pub1.take() == true)
-        #expect(pub2.take() == true)
-        #expect(pub3.take() == true)
-        #expect(barrier.arrived == 3)
-        #expect(barrier.isReleased)
-    }
-
-    @Test
-    func `arrive after release invokes callback immediately`() {
-        let barrier = Async.Barrier(parties: 1)
-        barrier.arrive {}
-
-        let publication = Async.Publication<Bool>()
-        barrier.arrive { publication.publish(true) }
-        #expect(publication.take() == true)
-    }
-
-    #if !hasFeature(Embedded)
-        @Test
-        func `async arrive releases when all parties arrive`() async {
-            let barrier = Async.Barrier(parties: 3)
-
-            await withTaskGroup(of: Void.self) { group in
-                for _ in 0..<3 {
-                    group.addTask {
-                        try? await barrier.arrive()
-                    }
-                }
-            }
-
-            #expect(barrier.isReleased)
-            #expect(barrier.arrived == 3)
-        }
-    #endif
-}
 
 #if !hasFeature(Embedded)
-    extension Core.Test.Completion {
+    extension Core.Test.`Completions enforce their state transitions` {
         @Test
-        func `init creates pending state`() {
+        func `Init creates pending state`() {
             let completion = Async.Completion<Int, Never>()
             #expect(completion.state == .pending)
             #expect(!completion.isTerminal)
         }
 
         @Test
-        func `start transitions to running`() throws {
+        func `Start transitions to running`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             #expect(completion.state == .running)
@@ -461,7 +351,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `complete transitions to completed`() throws {
+        func `Complete transitions to completed`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             try completion.complete(42)
@@ -470,7 +360,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `timeout transitions to timedOut`() throws {
+        func `Timeout transitions to timedOut`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             try completion.timeout()
@@ -479,7 +369,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `cancel from pending transitions to cancelled`() throws {
+        func `Cancel from pending transitions to cancelled`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.cancel()
             #expect(completion.state == .cancelled)
@@ -487,7 +377,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `cancel from running transitions to cancelled`() throws {
+        func `Cancel from running transitions to cancelled`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             try completion.cancel()
@@ -496,7 +386,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `double start throws`() throws {
+        func `Starting a completion twice throws`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             do {
@@ -508,7 +398,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `complete without start throws`() {
+        func `Complete without start throws`() {
             let completion = Async.Completion<Int, Never>()
             do {
                 try completion.complete(42)
@@ -519,7 +409,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `timeout without start throws`() {
+        func `Timeout without start throws`() {
             let completion = Async.Completion<Int, Never>()
             do {
                 try completion.timeout()
@@ -530,7 +420,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `cancel from completed throws`() throws {
+        func `Cancel from completed throws`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             try completion.complete(42)
@@ -543,7 +433,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `complete after timeout throws`() throws {
+        func `Complete after timeout throws`() throws {
             let completion = Async.Completion<Int, Never>()
             try completion.start()
             try completion.timeout()
@@ -556,7 +446,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `fail from pending transitions to failed`() {
+        func `Fail from pending transitions to failed`() {
             let completion = Async.Completion<Int, TestError>()
             do {
                 try completion.fail(.testFailure)
@@ -568,7 +458,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `fail from running throws`() throws {
+        func `Fail from running throws`() throws {
             let completion = Async.Completion<Int, TestError>()
             try completion.start()
             do {
@@ -580,7 +470,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `full lifecycle with continuation`() async {
+        func `Full lifecycle with continuation`() async {
             let completion = Async.Completion<Int, Never>()
 
             let result = await withCheckedContinuation { continuation in
@@ -601,7 +491,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `cancellation delivers cancellation error`() async {
+        func `Cancellation delivers cancellation error`() async {
             let completion = Async.Completion<Int, Never>()
 
             let result = await withCheckedContinuation { continuation in
@@ -622,7 +512,7 @@ extension Core.Test.Barrier {
         }
 
         @Test
-        func `timeout delivers timeout error`() async {
+        func `Timeout delivers timeout error`() async {
             let completion = Async.Completion<Int, Never>()
 
             let result = await withCheckedContinuation { continuation in

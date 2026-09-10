@@ -3,12 +3,12 @@ import Testing
 
 enum Demand {
     enum Test {
-        @Suite struct Unit {}
-        @Suite struct EdgeCase {}
+        @Suite struct `Demand operations preserve their basic behavior` {}
+        @Suite struct `Demand operations preserve boundary behavior` {}
     }
 }
 
-extension Demand.Test.Unit {
+extension Demand.Test.`Demand operations preserve their basic behavior` {
 
     @Test
     func fulfillConsumesExactlyTheRequestedCount() {
@@ -73,7 +73,7 @@ extension Demand.Test.Unit {
     }
 }
 
-extension Demand.Test.EdgeCase {
+extension Demand.Test.`Demand operations preserve boundary behavior` {
 
     @Test
     func zeroCountIsNone() {

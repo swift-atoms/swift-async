@@ -4,13 +4,13 @@ import Testing
 
 enum Cancellation {
     enum Test {
-        @Suite struct Unit {}
-        @Suite struct EdgeCase {}
-        @Suite struct Concurrency {}
+        @Suite struct `Cancellation operations preserve their basic behavior` {}
+        @Suite struct `Cancellation operations preserve boundary behavior` {}
+        @Suite struct `Cancellation operations preserve state during concurrent use` {}
     }
 }
 
-extension Cancellation.Test.Unit {
+extension Cancellation.Test.`Cancellation operations preserve their basic behavior` {
 
     @Test
     func stateTransitionsExactlyOnce() {
@@ -83,7 +83,7 @@ extension Cancellation.Test.Unit {
     }
 }
 
-extension Cancellation.Test.EdgeCase {
+extension Cancellation.Test.`Cancellation operations preserve boundary behavior` {
 
     @Test
     func cancelWithNoHandlers() {
@@ -129,7 +129,7 @@ private final class Counter: Sendable {
     }
 }
 
-extension Cancellation.Test.Concurrency {
+extension Cancellation.Test.`Cancellation operations preserve state during concurrent use` {
 
     @Test
     func concurrentCancelIsExactlyOnce() async {

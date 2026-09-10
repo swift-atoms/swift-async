@@ -3,30 +3,30 @@ import Testing
 
 enum Publication {
     enum Test {
-        @Suite struct Unit {}
-        @Suite struct EdgeCase {}
-        @Suite struct Integration {}
-        @Suite(.serialized) struct Performance {}
+        @Suite struct `Publication operations preserve their basic behavior` {}
+        @Suite struct `Publication operations preserve boundary behavior` {}
+        @Suite struct `Publication operations compose with their dependencies` {}
+        @Suite(.serialized) struct `Publication operations preserve values during repeated execution` {}
     }
 }
 
-extension Publication.Test.Unit {
+extension Publication.Test.`Publication operations preserve their basic behavior` {
     @Test
-    func `init creates empty slot`() {
+    func `Init creates empty slot`() {
         let publication = Async.Publication<Int>()
         let taken = publication.take()
         #expect(taken == nil)
     }
 
     @Test
-    func `init with value creates non-empty slot`() {
+    func `Init with value creates non-empty slot`() {
         let publication = Async.Publication<Int>(42)
         let taken = publication.take()
         #expect(taken == 42)
     }
 
     @Test
-    func `publish sets value`() {
+    func `Publishing stores a value`() {
         let publication = Async.Publication<Int>()
         publication.publish(42)
         let taken = publication.take()
@@ -34,7 +34,7 @@ extension Publication.Test.Unit {
     }
 
     @Test
-    func `take clears slot`() {
+    func `Taking a published value clears its slot`() {
         let publication = Async.Publication<Int>()
         publication.publish(42)
         _ = publication.take()
@@ -43,7 +43,7 @@ extension Publication.Test.Unit {
     }
 
     @Test
-    func `latest publish dominates earlier values`() {
+    func `Latest publish dominates earlier values`() {
         let publication = Async.Publication<Int>()
         publication.publish(1)
         publication.publish(2)
@@ -54,7 +54,7 @@ extension Publication.Test.Unit {
     }
 
     @Test
-    func `multiple takes after single publish - single winner`() {
+    func `Multiple takes after single publish - single winner`() {
         let publication = Async.Publication<Int>()
         publication.publish(42)
 
@@ -68,16 +68,16 @@ extension Publication.Test.Unit {
     }
 }
 
-extension Publication.Test.EdgeCase {
+extension Publication.Test.`Publication operations preserve boundary behavior` {
     @Test
-    func `take on never-published slot`() {
+    func `Take on never-published slot`() {
         let publication = Async.Publication<String>()
         #expect(publication.take() == nil)
         #expect(publication.take() == nil)
     }
 
     @Test
-    func `publish after take resets slot`() {
+    func `Publish after take resets slot`() {
         let publication = Async.Publication<Int>()
         publication.publish(1)
         _ = publication.take()
@@ -86,7 +86,7 @@ extension Publication.Test.EdgeCase {
     }
 
     @Test
-    func `rapid publish-take cycles`() {
+    func `Rapid publication and consumption preserve their values`() {
         let publication = Async.Publication<Int>()
 
         (0..<1000).forEach { i in
@@ -97,10 +97,10 @@ extension Publication.Test.EdgeCase {
     }
 }
 
-extension Publication.Test.Performance {
+extension Publication.Test.`Publication operations preserve values during repeated execution` {
 
     @Test
-    func `concurrent take race - exactly one winner`() async {
+    func `Concurrent take race - exactly one winner`() async {
 
         for round in 0..<100 {
             let publication = Async.Publication<Int>()
@@ -135,7 +135,7 @@ extension Publication.Test.Performance {
     }
 
     @Test
-    func `publish happens-before take visibility`() async {
+    func `Publish happens-before take visibility`() async {
 
         let publication = Async.Publication<Int>()
         let iterations = 1_000
@@ -168,7 +168,7 @@ extension Publication.Test.Performance {
     }
 
     @Test
-    func `publish-take interleaving observes valid values`() async {
+    func `Publish-take interleaving observes valid values`() async {
 
         let publication = Async.Publication<Int>()
         let iterations = 1_000
@@ -210,7 +210,7 @@ extension Publication.Test.Performance {
     }
 
     @Test
-    func `high contention publish-take admissibility`() async {
+    func `High contention publish-take admissibility`() async {
 
         let publication = Async.Publication<Int>()
         let publisherCount = 5
@@ -259,7 +259,7 @@ extension Publication.Test.Performance {
     }
 
     @Test
-    func `cancellation bridge pattern - token race`() async {
+    func `Cancellation bridge pattern - token race`() async {
 
         for round in 0..<100 {
             let publication = Async.Publication<Int>()

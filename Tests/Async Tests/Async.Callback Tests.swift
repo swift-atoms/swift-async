@@ -26,28 +26,28 @@ private final class Box<T> {
 
 enum Callback {
     enum Test {
-        @Suite struct Unit {}
-        @Suite struct EdgeCase {}
-        @Suite struct Integration {}
-        @Suite(.serialized) struct Performance {}
+        @Suite struct `Callback operations preserve their basic behavior` {}
+        @Suite struct `Callback operations preserve boundary behavior` {}
+        @Suite struct `Callback operations compose with their dependencies` {}
+        @Suite(.serialized) struct `Callback operations preserve values during repeated execution` {}
     }
 }
 
-extension Callback.Test.Unit {
+extension Callback.Test.`Callback operations preserve their basic behavior` {
     @Test
-    func `init with immediate value returns that value`() async {
+    func `Init with immediate value returns that value`() async {
         let callback = Async.Callback(value: 42)
         #expect(await callback() == 42)
     }
 
     @Test
-    func `init with deferred computation produces value`() async {
+    func `Init with deferred computation produces value`() async {
         let callback = Async.Callback<String> { "computed" }
         #expect(await callback() == "computed")
     }
 
     @Test
-    func `deferred computation does not execute until called`() async {
+    func `Deferred computation does not execute until called`() async {
         var executed = false
         let callback = Async.Callback<Int> {
             executed = true
@@ -60,13 +60,13 @@ extension Callback.Test.Unit {
     }
 
     @Test
-    func `map transforms value`() async {
+    func `Mapping transforms the callback value`() async {
         let callback = Async.Callback(value: 21).map { $0 * 2 }
         #expect(await callback() == 42)
     }
 
     @Test
-    func `map chains three levels`() async {
+    func `Map chains three levels`() async {
         let callback = Async.Callback(value: 10)
             .map { $0 + 5 }
             .map { "v=\($0)" }
@@ -75,14 +75,14 @@ extension Callback.Test.Unit {
     }
 
     @Test
-    func `flatMap chains computations`() async {
+    func `Flat mapping chains callback computations`() async {
         let callback = Async.Callback(value: 7)
             .flatMap { v in Async.Callback(value: "r=\(v * 6)") }
         #expect(await callback() == "r=42")
     }
 
     @Test
-    func `flatMap chains multiple levels`() async {
+    func `FlatMap chains multiple levels`() async {
         let callback = Async.Callback(value: 1)
             .flatMap { v in Async.Callback(value: v + 10) }
             .flatMap { v in Async.Callback(value: v * 2) }
@@ -90,14 +90,14 @@ extension Callback.Test.Unit {
     }
 
     @Test
-    func `non-Sendable value produced inside callback`() async {
+    func `Non-Sendable value produced inside callback`() async {
         let callback = Async.Callback<Box<String>> { Box("hello") }
         let result = await callback()
         #expect(result.value == "hello")
     }
 
     @Test
-    func `non-Sendable value through map`() async {
+    func `Non-Sendable value through map`() async {
         let callback = Async.Callback<Box<Int>> { Box(21) }
             .map { "\($0.value * 2)" }
         #expect(await callback() == "42")
@@ -105,7 +105,7 @@ extension Callback.Test.Unit {
 
     #if !hasFeature(Embedded)
         @Test
-        func `init wrapping bridges CPS completion handler`() async {
+        func `Init wrapping bridges CPS completion handler`() async {
             let callback = Async.Callback<Int>(wrapping: { completion in
                 completion(42)
             })
@@ -114,7 +114,7 @@ extension Callback.Test.Unit {
     #endif
 }
 
-extension Callback.Test.EdgeCase {
+extension Callback.Test.`Callback operations preserve boundary behavior` {
     @Test
     func `Void callback completes without value`() async {
         var flag = false
@@ -126,20 +126,20 @@ extension Callback.Test.EdgeCase {
     }
 
     @Test
-    func `nested callback flattened via flatMap`() async {
+    func `Nested callback flattened via flatMap`() async {
         let inner = Async.Callback(value: 42)
         let outer = Async.Callback(value: ()).flatMap { _ in inner }
         #expect(await outer() == 42)
     }
 
     @Test
-    func `identity map preserves value`() async {
+    func `Identity map preserves value`() async {
         let callback = Async.Callback(value: "unchanged").map { $0 }
         #expect(await callback() == "unchanged")
     }
 
     @Test
-    func `multiple invocations produce independent results`() async {
+    func `Multiple invocations produce independent results`() async {
         var counter = 0
         let callback = Async.Callback<Int> {
             counter += 1
@@ -152,7 +152,7 @@ extension Callback.Test.EdgeCase {
     }
 
     @Test
-    func `flatMap left identity — wrapping then chaining equals direct application`() async {
+    func `FlatMap left identity — wrapping then chaining equals direct application`() async {
         let f: (Int) -> Async.Callback<String> = { v in .init(value: "n=\(v)") }
         let lhs = Async.Callback(value: 5).flatMap(f)
         let rhs = f(5)
@@ -162,7 +162,7 @@ extension Callback.Test.EdgeCase {
     }
 
     @Test
-    func `flatMap right identity — chaining with init(value:) is identity`() async {
+    func `FlatMap right identity — chaining with init(value:) is identity`() async {
         let callback = Async.Callback(value: 42)
         let chained = callback.flatMap { Async.Callback(value: $0) }
         let lhs = await chained()
@@ -183,16 +183,16 @@ extension Callback.Test.EdgeCase {
     #endif
 }
 
-extension Callback.Test.Integration {
+extension Callback.Test.`Callback operations compose with their dependencies` {
     @Test @MainActor
-    func `init closure preserves MainActor isolation`() async {
+    func `Init closure preserves MainActor isolation`() async {
         let mainThreadID = currentThreadID()
         let callback = Async.Callback<Bool> { currentThreadID() == mainThreadID }
         #expect(await callback())
     }
 
     @Test @MainActor
-    func `map transform preserves MainActor isolation`() async {
+    func `Map transform preserves MainActor isolation`() async {
         let mainThreadID = currentThreadID()
         let callback = Async.Callback(value: 21)
             .map { _ -> Bool in currentThreadID() == mainThreadID }
@@ -200,7 +200,7 @@ extension Callback.Test.Integration {
     }
 
     @Test @MainActor
-    func `chained maps preserve isolation at each level`() async {
+    func `Chained maps preserve isolation at each level`() async {
         let mainThreadID = currentThreadID()
         let callback = Async.Callback(value: 0)
             .map { _ -> Bool in currentThreadID() == mainThreadID }
@@ -211,7 +211,7 @@ extension Callback.Test.Integration {
     }
 
     @Test @MainActor
-    func `flatMap preserves isolation`() async {
+    func `Flat mapping preserves caller isolation`() async {
         let mainThreadID = currentThreadID()
         let callback = Async.Callback(value: 0)
             .flatMap { _ in Async.Callback(value: currentThreadID() == mainThreadID) }
@@ -219,7 +219,7 @@ extension Callback.Test.Integration {
     }
 
     @Test @MainActor
-    func `caller remains on MainActor after awaiting callback`() async {
+    func `Caller remains on MainActor after awaiting callback`() async {
         let mainThreadID = currentThreadID()
         let callback = Async.Callback(value: 42)
         let result = await callback()
