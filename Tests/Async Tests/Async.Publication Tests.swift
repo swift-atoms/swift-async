@@ -174,7 +174,7 @@ extension Publication.Test.`Publication operations preserve values during repeat
         let iterations = 1_000
         let range = 0..<iterations
 
-        let ends = Async.Channel<Int>.Unbounded().take().ends()
+        let (stream, continuation) = AsyncStream<Int>.makeStream(bufferingPolicy: .unbounded)
 
         await withTaskGroup(of: Void.self) { group in
 
@@ -185,20 +185,20 @@ extension Publication.Test.`Publication operations preserve values during repeat
                 }
             }
 
-            group.addTask { [sender = ends.sender] in
+            group.addTask { [continuation] in
                 for _ in range {
                     if let value = publication.take() {
-                        try? sender.send(value)
+                        continuation.yield(value)
                     }
                     await Task.yield()
                 }
             }
         }
 
-        ends.close()
+        continuation.finish()
 
         var observed: [Int] = []
-        while let value = try? await ends.receiver.receive() {
+        for await value in stream {
             observed.append(value)
         }
 
@@ -218,7 +218,7 @@ extension Publication.Test.`Publication operations preserve values during repeat
         let iterationsPerActor = 100
         let totalRange = 0..<(publisherCount * iterationsPerActor)
 
-        let ends = Async.Channel<Int>.Unbounded().take().ends()
+        let (stream, continuation) = AsyncStream<Int>.makeStream(bufferingPolicy: .unbounded)
 
         await withTaskGroup(of: Void.self) { group in
 
@@ -233,10 +233,10 @@ extension Publication.Test.`Publication operations preserve values during repeat
             }
 
             for _ in 0..<takerCount {
-                group.addTask { [sender = ends.sender] in
+                group.addTask { [continuation] in
                     for _ in 0..<iterationsPerActor {
                         if let value = publication.take() {
-                            try? sender.send(value)
+                            continuation.yield(value)
                         }
                         await Task.yield()
                     }
@@ -244,10 +244,10 @@ extension Publication.Test.`Publication operations preserve values during repeat
             }
         }
 
-        ends.close()
+        continuation.finish()
 
         var observed: [Int] = []
-        while let value = try? await ends.receiver.receive() {
+        for await value in stream {
             observed.append(value)
         }
 
