@@ -86,7 +86,10 @@ let package = Package(
             dependencies: [
                 .target(name: "Async Primitive"),
             ],
-            path: "Sources/Async Mutex"
+            path: "Sources/Async Mutex",
+            swiftSettings: [
+                .enableExperimentalFeature("RawLayout"),
+            ]
         ),
         .target(
             name: "Async Promise",
@@ -153,19 +156,14 @@ let package = Package(
 )
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
-    let ecosystem: [SwiftSetting] = [
+    target.swiftSettings = (target.swiftSettings ?? []) + [
         .strictMemorySafety(),
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("InternalImportsByDefault"),
         .enableUpcomingFeature("MemberImportVisibility"),
         .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableExperimentalFeature("Lifetimes"),
         .enableUpcomingFeature("InferIsolatedConformances"),
+        .enableExperimentalFeature("Lifetimes"),
+        .treatAllWarnings(as: .error),
     ]
-
-    let package: [SwiftSetting] = [
-        .enableExperimentalFeature("RawLayout")
-    ]
-
-    target.swiftSettings = (target.swiftSettings ?? []) + ecosystem + package
 }

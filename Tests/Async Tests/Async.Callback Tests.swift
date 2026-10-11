@@ -11,7 +11,7 @@ import Testing
 
 private func currentThreadID() -> UInt {
     #if canImport(Darwin)
-        UInt(pthread_mach_thread_np(pthread_self()))
+        unsafe UInt(pthread_mach_thread_np(pthread_self()))
     #elseif canImport(Glibc)
         UInt(pthread_self())
     #elseif os(Windows)

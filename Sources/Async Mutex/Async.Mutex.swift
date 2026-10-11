@@ -5,20 +5,6 @@
 
         public struct Mutex<Value: ~Copyable>: ~Copyable {
 
-            @safe
-            @_rawLayout(like: Value, movesAsLike)
-            @usableFromInline
-            struct _Value: ~Copyable {
-                @inlinable package init() {}
-            }
-
-            @safe
-            @_rawLayout(like: os_unfair_lock_s)
-            @usableFromInline
-            struct _Lock: ~Copyable, @unchecked Sendable {
-                @inlinable package init() {}
-            }
-
             @usableFromInline
             let _lockRaw: _Lock
 
@@ -70,7 +56,7 @@
     extension Async.Mutex where Value: ~Copyable {
 
         @inlinable
-        public borrowing func withLock<T: ~Copyable, E: Swift.Error>(
+        public borrowing func withLock<T: ~Copyable, E: Swift::Error>(
             _ body: (inout sending Value) throws(E) -> sending T
         ) throws(E) -> sending T {
             _lock()
@@ -79,7 +65,7 @@
         }
 
         @inlinable
-        public borrowing func withLockIfAvailable<T: ~Copyable, E: Swift.Error>(
+        public borrowing func withLockIfAvailable<T: ~Copyable, E: Swift::Error>(
             _ body: (inout sending Value) throws(E) -> sending T
         ) throws(E) -> sending T? {
             guard unsafe os_unfair_lock_trylock(_lockPointer()) else { return nil }
@@ -122,14 +108,14 @@
     extension Async.Mutex where Value: ~Copyable {
 
         @inlinable
-        public func withLock<T: ~Copyable, E: Swift.Error>(
+        public func withLock<T: ~Copyable, E: Swift::Error>(
             _ body: (inout sending Value) throws(E) -> sending T
         ) throws(E) -> sending T {
             try body(&_value)
         }
 
         @inlinable
-        public func withLockIfAvailable<T: ~Copyable, E: Swift.Error>(
+        public func withLockIfAvailable<T: ~Copyable, E: Swift::Error>(
             _ body: (inout sending Value) throws(E) -> sending T
         ) throws(E) -> sending T? {
             try body(&_value)

@@ -5,7 +5,7 @@
     extension Async.Mutex where Value: ~Copyable {
 
         @inlinable
-        public func withLock<V: ~Copyable & Sendable, T: ~Copyable, E: Swift.Error>(
+        public func withLock<V: ~Copyable & Sendable, T: ~Copyable, E: Swift::Error>(
             consuming value: consuming sending V,
             body: (inout sending Value, consuming V) throws(E) -> sending T
         ) throws(E) -> sending T {
@@ -24,7 +24,7 @@
     extension Async.Mutex where Value: ~Copyable {
 
         @inlinable
-        public func withLock<V: ~Copyable & Sendable, T: ~Copyable, E: Swift.Error>(
+        public func withLock<V: ~Copyable & Sendable, T: ~Copyable, E: Swift::Error>(
             deposit value: consuming sending V,
             body: (inout sending Value, inout V?) throws(E) -> sending T
         ) throws(E) -> sending T {

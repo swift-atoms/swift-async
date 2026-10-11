@@ -4,11 +4,7 @@
 
     extension Async {
 
-        public final class Completion<Success: Sendable, Failure: Swift.Error>: Sendable {
-
-            public typealias Result = Swift.Result<
-                Success, Async.Completion<Success, Failure>.Error
-            >
+        public final class Completion<Success: Sendable, Failure: Swift::Error>: Sendable {
 
             private let _state: Atomic<State>
             private let _continuation: Async.Mutex<CheckedContinuation<Result, Never>?>
@@ -18,6 +14,13 @@
                 self._continuation = Async.Mutex(nil)
             }
         }
+    }
+
+    extension Async.Completion {
+
+        public typealias Result = Swift::Result<
+            Success, Async.Completion<Success, Failure>.Error
+        >
     }
 
     extension Async.Completion {

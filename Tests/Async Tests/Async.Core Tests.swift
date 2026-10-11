@@ -533,7 +533,7 @@ extension Core.Test.`Promises retain the first fulfilled value` {
         }
     }
 
-    private enum TestError: Swift.Error, Sendable {
+    private enum TestError: Swift::Error, Sendable {
         case testFailure
     }
 #endif

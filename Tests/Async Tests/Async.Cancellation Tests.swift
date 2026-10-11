@@ -121,7 +121,9 @@ extension Cancellation.Test.`Cancellation operations preserve boundary behavior`
 
 private final class Counter: Sendable {
     private let _value = Atomic<Int>(0)
+}
 
+extension Counter {
     var value: Int { self._value.load(ordering: .relaxed) }
 
     func increment() {

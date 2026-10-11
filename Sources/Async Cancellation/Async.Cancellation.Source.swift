@@ -3,12 +3,6 @@ internal import Async_Mutex
 extension Async.Cancellation {
 
     public final class Source: Sendable {
-        struct _State {
-            var machine: Async.Cancellation.State = .active
-            var nextIdentifier: UInt64 = 0
-            var handlers: [UInt64: @Sendable () -> Void] = [:]
-        }
-
         let _state: Async.Mutex<_State>
 
         public init() {

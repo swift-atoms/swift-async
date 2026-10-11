@@ -1,6 +1,6 @@
 extension Async.Lifecycle {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case shutdown
 
@@ -12,7 +12,7 @@ extension Async.Lifecycle {
 
 extension Async.Lifecycle.Error: CustomStringConvertible {
 
-    public var description: Swift.String {
+    public var description: Swift::String {
         switch self {
         case .shutdown: "shutdown"
         case .cancelled: "cancelled"

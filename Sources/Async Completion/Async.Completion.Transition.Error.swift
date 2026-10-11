@@ -2,7 +2,7 @@
 
     extension Async.Completion.Transition {
 
-        public enum Error: Swift.Error, Sendable {
+        public enum Error: Swift::Error, Sendable {
 
             case alreadyDone
         }
