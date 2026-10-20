@@ -29,7 +29,8 @@ enum Callback {
         @Suite struct `Callback operations preserve their basic behavior` {}
         @Suite struct `Callback operations preserve boundary behavior` {}
         @Suite struct `Callback operations compose with their dependencies` {}
-        @Suite(.serialized) struct `Callback operations preserve values during repeated execution` {}
+        @Suite(.serialized) struct `Callback operations preserve values during repeated execution` {
+        }
     }
 }
 

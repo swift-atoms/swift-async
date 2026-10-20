@@ -332,7 +332,6 @@ extension Core.Test.`Promises retain the first fulfilled value` {
     #endif
 }
 
-
 #if !hasFeature(Embedded)
     extension Core.Test.`Completions enforce their state transitions` {
         @Test

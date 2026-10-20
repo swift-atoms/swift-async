@@ -6,7 +6,8 @@ enum Publication {
         @Suite struct `Publication operations preserve their basic behavior` {}
         @Suite struct `Publication operations preserve boundary behavior` {}
         @Suite struct `Publication operations compose with their dependencies` {}
-        @Suite(.serialized) struct `Publication operations preserve values during repeated execution` {}
+        @Suite(.serialized)
+        struct `Publication operations preserve values during repeated execution` {}
     }
 }
 

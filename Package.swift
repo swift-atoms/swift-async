@@ -34,14 +34,13 @@ let package = Package(
     targets: [
         .target(
             name: "Async Primitive",
-            dependencies: [
-            ],
+            dependencies: [],
             path: "Sources/Async Primitive"
         ),
         .target(
             name: "Async Callback",
             dependencies: [
-                .target(name: "Async Primitive"),
+                .target(name: "Async Primitive")
             ],
             path: "Sources/Async Callback"
         ),
@@ -56,39 +55,39 @@ let package = Package(
         .target(
             name: "Async Continuation",
             dependencies: [
-                .target(name: "Async Primitive"),
+                .target(name: "Async Primitive")
             ],
             path: "Sources/Async Continuation"
         ),
         .target(
             name: "Async Demand",
             dependencies: [
-                .target(name: "Async Primitive"),
+                .target(name: "Async Primitive")
             ],
             path: "Sources/Async Demand"
         ),
         .target(
             name: "Async Lifecycle",
             dependencies: [
-                .target(name: "Async Primitive"),
+                .target(name: "Async Primitive")
             ],
             path: "Sources/Async Lifecycle"
         ),
         .target(
             name: "Async Precedence",
             dependencies: [
-                .target(name: "Async Primitive"),
+                .target(name: "Async Primitive")
             ],
             path: "Sources/Async Precedence"
         ),
         .target(
             name: "Async Mutex",
             dependencies: [
-                .target(name: "Async Primitive"),
+                .target(name: "Async Primitive")
             ],
             path: "Sources/Async Mutex",
             swiftSettings: [
-                .enableExperimentalFeature("RawLayout"),
+                .enableExperimentalFeature("RawLayout")
             ]
         ),
         .target(
@@ -156,14 +155,15 @@ let package = Package(
 )
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
-    target.swiftSettings = (target.swiftSettings ?? []) + [
-        .strictMemorySafety(),
-        .enableUpcomingFeature("ExistentialAny"),
-        .enableUpcomingFeature("InternalImportsByDefault"),
-        .enableUpcomingFeature("MemberImportVisibility"),
-        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableUpcomingFeature("InferIsolatedConformances"),
-        .enableExperimentalFeature("Lifetimes"),
-        .treatAllWarnings(as: .error),
-    ]
+    target.swiftSettings =
+        (target.swiftSettings ?? []) + [
+            .strictMemorySafety(),
+            .enableUpcomingFeature("ExistentialAny"),
+            .enableUpcomingFeature("InternalImportsByDefault"),
+            .enableUpcomingFeature("MemberImportVisibility"),
+            .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+            .enableUpcomingFeature("InferIsolatedConformances"),
+            .enableExperimentalFeature("Lifetimes"),
+            .treatAllWarnings(as: .error),
+        ]
 }
