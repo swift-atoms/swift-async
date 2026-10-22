@@ -32,6 +32,7 @@ jobs:
           }
           SWIFT
           swiftc -c /tmp/Concurrency.swift \
+            -wmo \
             -enable-experimental-feature Embedded \
             -o /tmp/Concurrency.o
 
@@ -47,6 +48,7 @@ jobs:
           }
           SWIFT
           swiftc -c /tmp/KeyPath.swift \
+            -wmo \
             -enable-experimental-feature Embedded \
             -o /tmp/KeyPath.o
 
@@ -62,6 +64,7 @@ jobs:
           }
           SWIFT
           if swiftc -c /tmp/NonFinal.swift \
+            -wmo \
             -enable-experimental-feature Embedded \
             -o /tmp/NonFinal.o
           then
@@ -81,6 +84,7 @@ jobs:
           }
           SWIFT
           swiftc -c /tmp/Final.swift \
+            -wmo \
             -enable-experimental-feature Embedded \
             -o /tmp/Final.o
 
@@ -92,6 +96,7 @@ jobs:
           }
           SWIFT
           if swiftc -c /tmp/DynamicMessage.swift \
+            -wmo \
             -enable-experimental-feature Embedded \
             -o /tmp/DynamicMessage.o
           then
@@ -105,6 +110,7 @@ jobs:
           }
           SWIFT
           swiftc -c /tmp/StaticMessage.swift \
+            -wmo \
             -enable-experimental-feature Embedded \
             -o /tmp/StaticMessage.o
 
