@@ -52,41 +52,49 @@ jobs:
             -enable-experimental-feature Embedded \
             -o /tmp/KeyPath.o
 
-      - name: Show non-final generic dispatch remains rejected
+      - name: Show generic dispatch through an existential remains rejected
         run: |
-          cat > /tmp/NonFinal.swift <<'SWIFT'
-          class Box {
+          cat > /tmp/Existential.swift <<'SWIFT'
+          protocol Sink {
+              func accept<Value>(_ value: Value)
+          }
+
+          struct Box: Sink {
               func accept<Value>(_ value: Value) {}
           }
 
-          func use(_ box: Box) {
-              box.accept(1)
+          func use(_ sink: any Sink) {
+              sink.accept(1)
           }
           SWIFT
-          if swiftc -c /tmp/NonFinal.swift \
+          if swiftc -c /tmp/Existential.swift \
             -wmo \
             -enable-experimental-feature Embedded \
-            -o /tmp/NonFinal.o
+            -o /tmp/Existential.o
           then
-            echo 'Expected the non-final generic method to be rejected.' >&2
+            echo 'Expected generic dispatch through an existential to be rejected.' >&2
             exit 1
           fi
 
-      - name: Prove final generic dispatch specializes
+      - name: Prove generic source dispatch specializes
         run: |
-          cat > /tmp/Final.swift <<'SWIFT'
-          final class Box {
+          cat > /tmp/Generic.swift <<'SWIFT'
+          protocol Sink {
+              func accept<Value>(_ value: Value)
+          }
+
+          struct Box: Sink {
               func accept<Value>(_ value: Value) {}
           }
 
-          func use(_ box: Box) {
-              box.accept(1)
+          func use<SinkValue: Sink>(_ sink: SinkValue) {
+              sink.accept(1)
           }
           SWIFT
-          swiftc -c /tmp/Final.swift \
+          swiftc -c /tmp/Generic.swift \
             -wmo \
             -enable-experimental-feature Embedded \
-            -o /tmp/Final.o
+            -o /tmp/Generic.o
 
       - name: Prove Embedded diagnostics require a static message
         run: |
@@ -185,7 +193,7 @@ jobs:
           diff --git a/Sources/Rational/Rational.swift b/Sources/Rational/Rational.swift
           --- a/Sources/Rational/Rational.swift
           +++ b/Sources/Rational/Rational.swift
-          @@ -52,7 +52,7 @@ public struct Rational<Integer: SignedInteger & Sendable>: Sendable {
+          @@ -52,6 +52,6 @@ public struct Rational<Integer: SignedInteger & Sendable>: Sendable {
                    return try body()
                } catch {
           -        preconditionFailure("Invariant violated: \(error)")
