@@ -1,0 +1,90 @@
+name: Embedded toolchain proof
+
+on:
+  push:
+    branches:
+      - research/embedded-concurrency-proof
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    container: swiftlang/swift@sha256:3ae5234721c87bda6ab232a2346fc143ac5688159626c8800e66a5eef2a31a16
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Record subject and toolchain
+        run: |
+          git rev-parse HEAD
+          swift --version
+
+      - name: Prove explicit Concurrency import exposes AsyncSequence
+        run: |
+          cat > /tmp/Concurrency.swift <<'SWIFT'
+          import _Concurrency
+
+          func consume<Values: AsyncSequence>(_ values: Values) async rethrows {
+              for try await _ in values {}
+          }
+          SWIFT
+          swiftc -c /tmp/Concurrency.swift \
+            -enable-experimental-feature Embedded \
+            -o /tmp/Concurrency.o
+
+      - name: Prove complete key paths
+        run: |
+          cat > /tmp/KeyPath.swift <<'SWIFT'
+          struct Point {
+              var x: Int
+          }
+
+          func x(of point: Point) -> Int {
+              point[keyPath: \Point.x]
+          }
+          SWIFT
+          swiftc -c /tmp/KeyPath.swift \
+            -enable-experimental-feature Embedded \
+            -o /tmp/KeyPath.o
+
+      - name: Show non-final generic dispatch remains rejected
+        run: |
+          cat > /tmp/NonFinal.swift <<'SWIFT'
+          class Box {
+              func accept<Value>(_ value: Value) {}
+          }
+
+          func use(_ box: Box) {
+              box.accept(1)
+          }
+          SWIFT
+          if swiftc -c /tmp/NonFinal.swift \
+            -enable-experimental-feature Embedded \
+            -o /tmp/NonFinal.o
+          then
+            echo 'Expected the non-final generic method to be rejected.' >&2
+            exit 1
+          fi
+
+      - name: Prove final generic dispatch specializes
+        run: |
+          cat > /tmp/Final.swift <<'SWIFT'
+          final class Box {
+              func accept<Value>(_ value: Value) {}
+          }
+
+          func use(_ box: Box) {
+              box.accept(1)
+          }
+          SWIFT
+          swiftc -c /tmp/Final.swift \
+            -enable-experimental-feature Embedded \
+            -o /tmp/Final.o
+
+      - name: Build the package with the fleet flags
+        run: |
+          swift build \
+            -Xswiftc -enable-experimental-feature -Xswiftc Embedded
