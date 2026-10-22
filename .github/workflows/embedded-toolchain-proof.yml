@@ -88,3 +88,23 @@ jobs:
         run: |
           swift build \
             -Xswiftc -enable-experimental-feature -Xswiftc Embedded
+
+  pool-target:
+    runs-on: ubuntu-latest
+    container: swiftlang/swift@sha256:f577f95edfb85cf3bdc45eb0badaab09239de5c86c69b3b6d594cc62916c0a7d
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: swift-atoms/swift-pool
+          ref: 74554b29d0698ce2ca710b75cace04e795bb96dd
+          persist-credentials: false
+
+      - name: Record subject and toolchain
+        run: |
+          git rev-parse HEAD
+          swift --version
+
+      - name: Build the centrally selected target with the fleet flags
+        run: |
+          swift build --target 'Pool Bounded' \
+            -Xswiftc -enable-experimental-feature -Xswiftc Embedded
