@@ -19,8 +19,8 @@ jobs:
 
       - name: Record subject and toolchain
         run: |
-          git rev-parse HEAD
           swift --version
+          git -c safe.directory="$PWD" rev-parse HEAD
 
       - name: Prove explicit Concurrency import exposes AsyncSequence
         run: |
@@ -125,8 +125,8 @@ jobs:
 
       - name: Record subject and toolchain
         run: |
-          git rev-parse HEAD
           swift --version
+          git -c safe.directory="$PWD" rev-parse HEAD
 
       - name: Build the centrally selected target with the fleet flags
         run: |
@@ -179,8 +179,8 @@ jobs:
 
       - name: Record subject and toolchain
         run: |
-          git rev-parse HEAD
           swift --version
+          git -c safe.directory="$PWD" rev-parse HEAD
 
       - name: Build the Foundation-free target with the fleet flags
         run: |
