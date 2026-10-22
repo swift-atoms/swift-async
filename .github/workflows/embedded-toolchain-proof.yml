@@ -103,8 +103,8 @@ jobs:
       - name: Prove Embedded diagnostics require a static message
         run: |
           cat > /tmp/DynamicMessage.swift <<'SWIFT'
-          func fail(_ value: Int) -> Never {
-              preconditionFailure("Invariant violated: \(value)")
+          func fail(_ error: any Error) -> Never {
+              preconditionFailure("Invariant violated: \(error)")
           }
           SWIFT
           if swiftc -c /tmp/DynamicMessage.swift \
@@ -199,13 +199,9 @@ jobs:
           diff --git a/Sources/Rational/Rational.swift b/Sources/Rational/Rational.swift
           --- a/Sources/Rational/Rational.swift
           +++ b/Sources/Rational/Rational.swift
-          @@ -52,5 +52,5 @@ public struct Rational<Integer: SignedInteger & Sendable>: Sendable {
-                   return try body()
-               } catch {
-          -        preconditionFailure("Invariant violated: \(error)")
-          +        preconditionFailure("Invariant violated")
-               }
-           }
+          @@ -55 +55 @@
+          -            preconditionFailure("Invariant violated: \(error)")
+          +            preconditionFailure("Invariant violated")
           PATCH
           git -c safe.directory="$PWD" diff --check
           swift package clean
