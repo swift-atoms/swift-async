@@ -84,6 +84,30 @@ jobs:
             -enable-experimental-feature Embedded \
             -o /tmp/Final.o
 
+      - name: Prove Embedded diagnostics require a static message
+        run: |
+          cat > /tmp/DynamicMessage.swift <<'SWIFT'
+          func fail(_ value: Int) -> Never {
+              preconditionFailure("Invariant violated: \(value)")
+          }
+          SWIFT
+          if swiftc -c /tmp/DynamicMessage.swift \
+            -enable-experimental-feature Embedded \
+            -o /tmp/DynamicMessage.o
+          then
+            echo 'Expected an interpolated diagnostic message to be rejected.' >&2
+            exit 1
+          fi
+
+          cat > /tmp/StaticMessage.swift <<'SWIFT'
+          func fail(_ value: Int) -> Never {
+              preconditionFailure("Invariant violated")
+          }
+          SWIFT
+          swiftc -c /tmp/StaticMessage.swift \
+            -enable-experimental-feature Embedded \
+            -o /tmp/StaticMessage.o
+
       - name: Build the package with the fleet flags
         run: |
           swift build \
@@ -107,4 +131,58 @@ jobs:
       - name: Build the centrally selected target with the fleet flags
         run: |
           swift build --target 'Pool Bounded' \
+            -Xswiftc -enable-experimental-feature -Xswiftc Embedded
+
+  foundation-free-target:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repository: swift-atoms/swift-fixed
+            ref: 6b56e77b2bda52528a118bf9670c8d5777007ce6
+            target: Fixed Standard Library Integration
+          - repository: swift-atoms/swift-renderer
+            ref: fc708f05d8b289b3ff8f6646554d922da5da2480
+            target: Renderer
+          - repository: swift-atoms/swift-sample
+            ref: dc10c9d87205bf889be55744c750ec5b28726a16
+            target: Sample
+          - repository: swift-atoms/swift-system
+            ref: 9262438be6e94996a9f26493347c064b3a7c5ef2
+            target: System Standard Library Integration
+          - repository: swift-atoms/swift-time
+            ref: a825223d8237e8b7dd182b4901a2ae55e694915d
+            target: Time
+          - repository: swift-molecules/swift-builder
+            ref: 72b4eafafdf4f1ac15451312698c17993ae5cbbf
+            target: Builder Standard Library Integration
+          - repository: swift-molecules/swift-range
+            ref: 1c50bef5b9179d6eef569e3c9a23ee627bd2e567
+            target: Range Standard Library Integration
+          - repository: swift-molecules/swift-stack
+            ref: 1b9a5937db4d70bf5efb76bcfffeb8a36fd9cd42
+            target: Stack Standard Library Integration
+          - repository: swift-molecules/swift-token
+            ref: bb2e2dc389d20e7f59141906e47011394272ada2
+            target: Token Standard Library Integration
+          - repository: swift-molecules/swift-tree
+            ref: c5a05ba1b4973bea52740608c9108916f9e9b9a8
+            target: Tree Standard Library Integration
+    runs-on: ubuntu-latest
+    container: swiftlang/swift@sha256:f577f95edfb85cf3bdc45eb0badaab09239de5c86c69b3b6d594cc62916c0a7d
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ matrix.repository }}
+          ref: ${{ matrix.ref }}
+          persist-credentials: false
+
+      - name: Record subject and toolchain
+        run: |
+          git rev-parse HEAD
+          swift --version
+
+      - name: Build the Foundation-free target with the fleet flags
+        run: |
+          swift build --target '${{ matrix.target }}' \
             -Xswiftc -enable-experimental-feature -Xswiftc Embedded
