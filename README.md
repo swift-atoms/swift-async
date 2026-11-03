@@ -5,11 +5,11 @@ Use this package when you are building a concurrency type yourself and need its 
 ## Model
 
 - `Async.Mutex<Value: ~Copyable>`: a value guarded by a lock. `withLock` runs a closure with `inout` access and returns its result; `withLockIfAvailable` returns `nil` instead of waiting. `withLock(consuming:body:)` and `withLock(deposit:body:)` move a value into the critical section.
-- `Async.Promise<Value>` (class): a value fulfilled once. `fulfill(_:)` returns whether this call set it; `wait(_:)` takes a callback; `value()` suspends until fulfilled; `isFulfilled` and `fulfilled` read the state. `Async.Gate` is `Promise<Void>` with `open()`, `wait()` and `isOpen`.
-- `Async.Cancellation.Source` (class) owns the state; `source.token` is a `Token` value that observes it (`isCancelled`, `checkCancellation()`, `onCancel(_:)`). `onCancel(_:)` returns a `Registration` whose `deregister()` returns whether it removed the handler. `Async.Cancellation.State` is the bare `active`/`cancelled` value.
+- `Async.Promise<Value>` (class): a value fulfilled once. `fulfill(_:)` returns whether this call set it; `wait(_:)` takes a callback; `value()` suspends until fulfilled; `isFulfilled` and `fulfilled` read the state. `Async.Gate` is `Async.Promise<Void>` with `open()`, `wait()` and `isOpen`.
+- `Async.Cancellation.Source` (class) owns the state; `source.token` is an `Async.Cancellation.Token` value that observes it (`isCancelled`, `checkCancellation()`, `onCancel(_:)`). `onCancel(_:)` returns an `Async.Cancellation.Registration` whose `deregister()` returns whether it removed the handler. `Async.Cancellation.State` is the bare `active`/`cancelled` value.
 - `Async.Publication<Value>` (class): one slot. `publish(_:)` overwrites it; `take()` returns the value and empties the slot.
 - `Async.Demand` (value): a backpressure count, `.none`, `.count(n)` or `.unlimited`, with `adding`/`add`, `subtracting`, `fulfill()` (consume one) and `release()` (return all, reset to `.none`).
-- `Async.Completion<Success, Failure>` (class): an atomic state machine (`State`: `pending`, `running`, `completed`, `timedOut`, `cancelled`, `failed`) that resumes a `CheckedContinuation<Result, Never>` registered with `set(continuation:)` when it reaches a terminal state.
+- `Async.Completion<Success, Failure>` (class): an atomic state machine (`Async.Completion.State`: `pending`, `running`, `completed`, `timedOut`, `cancelled`, `failed`) that resumes a `CheckedContinuation<Async.Completion.Result, Never>` registered with `set(continuation:)` when it reaches a terminal state.
 - `Async.Lifecycle.State` (`open`, `closing`, `closed`) moves forward through `state.shutdown.begin()` and `state.shutdown.complete()`.
 - `Async.Precedence.resolve(...)` picks one outcome from the shutdown, cancelled and timed-out flags.
 - `Async.Callback<Value>` (value): a deferred `async` computation, called as `callback()`, composed with `map` and `flatMap`. `init(wrapping:)` bridges a completion-handler API.
@@ -18,22 +18,22 @@ Use this package when you are building a concurrency type yourself and need its 
 ## Rules
 
 - `Async.Mutex` is not reentrant. Under Embedded Swift, or with none of Darwin, Synchronization or Kernel_Thread available, it is a plain box with no locking, for single-threaded use.
-- `Promise`: the first `fulfill` wins and later calls return `false`. Every waiter gets the value; a `wait` after fulfillment runs its callback at once on the caller. `value()` ignores task cancellation: a cancelled awaiter still waits for, and receives, the value.
-- `Cancellation.Source.cancel()` returns `true` exactly once, even under concurrent callers. Handlers run once, in registration order, outside the lock, and may call back into the source. A handler registered after cancellation runs immediately, and its registration's `deregister()` returns `false`.
-- `Publication`: the latest `publish` wins, and concurrent `take()` calls yield the value to exactly one caller.
-- `Demand` saturates: finite counts clamp to `maximumFiniteCount`, `.unlimited` absorbs addition and survives `subtracting`, subtracting `.unlimited` or more than is left gives `.none`, and `fulfill()` on `.none` returns `false`. Ordering puts `.unlimited` above every count.
-- `Completion` allows only `start()` pending→running; `complete`, `timeout` running→terminal; `cancel()` from pending or running; `fail` from pending only. Every other call throws. Call `set(continuation:)` before the terminal transition: a continuation set afterwards is never resumed.
-- `Lifecycle`: `begin()` only from `open`, `complete()` only from `closing`; otherwise they return `false` and leave the state unchanged, so `closing` cannot be skipped.
-- `Precedence`: shutdown beats cancelled beats timeout beats success; only the chosen outcome is evaluated.
-- `Callback` runs nothing until called, runs again on every call, and runs in the caller's isolation. The function passed to `init(wrapping:)` must call its completion exactly once.
-- Under Embedded Swift there is no `Completion`, `Continuation.Unsafe`, `Promise.value()`, `Gate.wait()`, `Callback(wrapping:)`, `withLock(consuming:body:)` or `withLock(deposit:body:)`.
+- `Async.Promise`: the first `fulfill` wins and later calls return `false`. Every waiter gets the value; a `wait` after fulfillment runs its callback at once on the caller. `value()` ignores task cancellation: a cancelled awaiter still waits for, and receives, the value.
+- `Async.Cancellation.Source.cancel()` returns `true` exactly once, even under concurrent callers. Handlers run once, in registration order, outside the lock, and may call back into the source. A handler registered after cancellation runs immediately, and its registration's `deregister()` returns `false`.
+- `Async.Publication`: the latest `publish` wins, and concurrent `take()` calls yield the value to exactly one caller.
+- `Async.Demand` saturates: finite counts clamp to `maximumFiniteCount`, `.unlimited` absorbs addition and survives `subtracting`, subtracting `.unlimited` or more than is left gives `.none`, and `fulfill()` on `.none` returns `false`. Ordering puts `.unlimited` above every count.
+- `Async.Completion` allows only `start()` pending→running; `complete`, `timeout` running→terminal; `cancel()` from pending or running; `fail` from pending only. Every other call throws. Call `set(continuation:)` before the terminal transition: a continuation set afterwards is never resumed.
+- `Async.Lifecycle.State`: `begin()` only from `open`, `complete()` only from `closing`; otherwise they return `false` and leave the state unchanged, so `closing` cannot be skipped.
+- `Async.Precedence`: shutdown beats cancelled beats timeout beats success; only the chosen outcome is evaluated.
+- `Async.Callback` runs nothing until called, runs again on every call, and runs in the caller's isolation. The function passed to `init(wrapping:)` must call its completion exactly once.
+- Under Embedded Swift there is no `Async.Completion`, `Async.Continuation.Unsafe`, `Async.Promise.value()`, `Async.Gate.wait()`, `Async.Callback(wrapping:)`, `withLock(consuming:body:)` or `withLock(deposit:body:)`.
 
 ## Error Handling
 
-- `Async.Cancellation.Error.cancelled`: thrown by `Token.checkCancellation()` once the source is cancelled.
-- `Async.Completion.Transition.Error.alreadyDone`: thrown by `Completion`'s `start`, `complete`, `timeout`, `cancel` and `fail` when the transition is not allowed from the current state.
-- `Async.Completion.Error` (`timeout`, `cancelled`, `failure(Failure)`): the failure side of `Completion.Result`, delivered to the continuation.
-- `Async.Lifecycle.Error` (`shutdown`, `cancelled`, `timeout`): for a type built on `Lifecycle` to throw; its `description` is the case name.
+- `Async.Cancellation.Error.cancelled`: thrown by `Async.Cancellation.Token.checkCancellation()` once the source is cancelled.
+- `Async.Completion.Transition.Error.alreadyDone`: thrown by `Async.Completion`'s `start`, `complete`, `timeout`, `cancel` and `fail` when the transition is not allowed from the current state.
+- `Async.Completion.Error` (`timeout`, `cancelled`, `failure(Failure)`): the failure side of `Async.Completion.Result`, delivered to the continuation.
+- `Async.Lifecycle.Error` (`shutdown`, `cancelled`, `timeout`): for a type built on `Async.Lifecycle` to throw; its `description` is the case name.
 
 ## Example
 
