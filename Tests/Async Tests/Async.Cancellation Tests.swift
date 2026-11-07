@@ -11,7 +11,6 @@ enum Cancellation {
 }
 
 extension Cancellation.Test.`Cancellation operations preserve their basic behavior` {
-
     @Test
     func stateTransitionsExactlyOnce() {
         var state = Async.Cancellation.State.active
@@ -84,7 +83,6 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
 }
 
 extension Cancellation.Test.`Cancellation operations preserve boundary behavior` {
-
     @Test
     func cancelWithNoHandlers() {
         let source = Async.Cancellation.Source()
@@ -96,7 +94,7 @@ extension Cancellation.Test.`Cancellation operations preserve boundary behavior`
     func handlersRunInRegistrationOrder() {
         let source = Async.Cancellation.Source()
         let order = Async.Mutex<[Int]>([])
-        for index in 0..<8 {
+        (0..<8).forEach { index in
             _ = source.onCancel { order.withLock { $0.append(index) } }
         }
         source.cancel()
@@ -108,7 +106,6 @@ extension Cancellation.Test.`Cancellation operations preserve boundary behavior`
         let source = Async.Cancellation.Source()
         let observed = Atomic<Bool>(false)
         _ = source.onCancel {
-
             if source.isCancelled, !source.cancel() {
                 observed.store(true, ordering: .relaxed)
             }
@@ -132,7 +129,6 @@ extension Counter {
 }
 
 extension Cancellation.Test.`Cancellation operations preserve state during concurrent use` {
-
     @Test
     func concurrentCancelIsExactlyOnce() async {
         let source = Async.Cancellation.Source()
