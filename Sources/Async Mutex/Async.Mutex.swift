@@ -126,7 +126,6 @@
 
 #if !hasFeature(Embedded) && canImport(Synchronization)
 
-
     extension Async.Mutex where Value: ~Copyable {
 
         @inlinable
