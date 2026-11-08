@@ -126,7 +126,6 @@
 
 #if !hasFeature(Embedded) && canImport(Synchronization)
 
-__DROP__
 
     extension Async.Mutex where Value: ~Copyable {
 
