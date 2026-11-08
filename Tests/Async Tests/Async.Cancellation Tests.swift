@@ -12,7 +12,7 @@ enum Cancellation {
 
 extension Cancellation.Test.`Cancellation operations preserve their basic behavior` {
     @Test
-    func stateTransitionsExactlyOnce() {
+    func `state transitions exactly once`() {
         var state = Async.Cancellation.State.active
         #expect(!state.isCancelled)
         let firstTransition = state.cancel()
@@ -24,7 +24,7 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
     }
 
     @Test
-    func sourceCancelsExactlyOnce() {
+    func `source cancels exactly once`() {
         let source = Async.Cancellation.Source()
         #expect(!source.isCancelled)
         #expect(source.cancel())
@@ -34,7 +34,7 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
     }
 
     @Test
-    func handlerRunsExactlyOnceAtCancellation() {
+    func `handler runs exactly once at cancellation`() {
         let source = Async.Cancellation.Source()
         let count = Atomic<Int>(0)
         let registration = source.onCancel { count.wrappingAdd(1, ordering: .relaxed) }
@@ -48,7 +48,7 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
     }
 
     @Test
-    func handlerRegisteredAfterCancellationRunsPromptly() {
+    func `handler registered after cancellation runs promptly`() {
         let source = Async.Cancellation.Source()
         source.cancel()
         let count = Atomic<Int>(0)
@@ -58,7 +58,7 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
     }
 
     @Test
-    func deregisteredHandlerNeverRuns() {
+    func `deregistered handler never runs`() {
         let source = Async.Cancellation.Source()
         let count = Atomic<Int>(0)
         let registration = source.onCancel { count.wrappingAdd(1, ordering: .relaxed) }
@@ -69,7 +69,7 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
     }
 
     @Test
-    func tokenObservesSourceState() throws {
+    func `token observes source state`() throws {
         let source = Async.Cancellation.Source()
         let token = source.token
         #expect(!token.isCancelled)
@@ -84,14 +84,14 @@ extension Cancellation.Test.`Cancellation operations preserve their basic behavi
 
 extension Cancellation.Test.`Cancellation operations preserve boundary behavior` {
     @Test
-    func cancelWithNoHandlers() {
+    func `cancel with no handlers`() {
         let source = Async.Cancellation.Source()
         #expect(source.cancel())
         #expect(source.isCancelled)
     }
 
     @Test
-    func handlersRunInRegistrationOrder() {
+    func `handlers run in registration order`() {
         let source = Async.Cancellation.Source()
         let order = Async.Mutex<[Int]>([])
         (0..<8).forEach { index in
@@ -102,7 +102,7 @@ extension Cancellation.Test.`Cancellation operations preserve boundary behavior`
     }
 
     @Test
-    func handlerMayReenterSource() {
+    func `handler may reenter source`() {
         let source = Async.Cancellation.Source()
         let observed = Atomic<Bool>(false)
         _ = source.onCancel {
@@ -130,7 +130,7 @@ extension Counter {
 
 extension Cancellation.Test.`Cancellation operations preserve state during concurrent use` {
     @Test
-    func concurrentCancelIsExactlyOnce() async {
+    func `concurrent cancel is exactly once`() async {
         let source = Async.Cancellation.Source()
         let handlerRuns = Counter()
         let transitions = Counter()
@@ -151,7 +151,7 @@ extension Cancellation.Test.`Cancellation operations preserve state during concu
     }
 
     @Test
-    func registrationRacesCancellation() async {
+    func `registration races cancellation`() async {
         for _ in 0..<64 {
             let source = Async.Cancellation.Source()
             let runs = Counter()

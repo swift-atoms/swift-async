@@ -11,7 +11,7 @@ enum Demand {
 extension Demand.Test.`Demand operations preserve their basic behavior` {
 
     @Test
-    func fulfillConsumesExactlyTheRequestedCount() {
+    func `fulfill consumes exactly the requested count`() {
         var demand = Async.Demand.count(3)
         let first = demand.fulfill()
         let second = demand.fulfill()
@@ -25,7 +25,7 @@ extension Demand.Test.`Demand operations preserve their basic behavior` {
     }
 
     @Test
-    func releaseReturnsOutstandingDemandAndZeroes() {
+    func `release returns outstanding demand and zeroes`() {
         var demand = Async.Demand.count(5)
         let released = demand.release()
         #expect(released == .count(5))
@@ -37,7 +37,7 @@ extension Demand.Test.`Demand operations preserve their basic behavior` {
     }
 
     @Test
-    func unlimitedFulfillsWithoutCounting() {
+    func `unlimited fulfills without counting`() {
         var demand = Async.Demand.unlimited
         for _ in 0..<1000 {
             let fulfilled = demand.fulfill()
@@ -48,7 +48,7 @@ extension Demand.Test.`Demand operations preserve their basic behavior` {
     }
 
     @Test
-    func addingAccumulates() {
+    func `adding accumulates`() {
         var demand = Async.Demand.none
         demand.add(.count(2))
         demand.add(.count(3))
@@ -57,7 +57,7 @@ extension Demand.Test.`Demand operations preserve their basic behavior` {
     }
 
     @Test
-    func unlimitedAbsorbs() {
+    func `unlimited absorbs`() {
         #expect(Async.Demand.unlimited.adding(.count(1)) == .unlimited)
         #expect(Async.Demand.count(1).adding(.unlimited) == .unlimited)
         #expect(Async.Demand.unlimited.subtracting(.count(9)) == .unlimited)
@@ -65,7 +65,7 @@ extension Demand.Test.`Demand operations preserve their basic behavior` {
     }
 
     @Test
-    func comparableOrdering() {
+    func `comparable ordering`() {
         #expect(Async.Demand.none < .count(1))
         #expect(Async.Demand.count(1) < .count(2))
         #expect(Async.Demand.count(.max) < .unlimited)
@@ -76,14 +76,14 @@ extension Demand.Test.`Demand operations preserve their basic behavior` {
 extension Demand.Test.`Demand operations preserve boundary behavior` {
 
     @Test
-    func zeroCountIsNone() {
+    func `zero count is none`() {
         #expect(Async.Demand.count(0) == .none)
         #expect(Async.Demand.count(0).isNone)
         #expect(!Async.Demand.count(0).isUnlimited)
     }
 
     @Test
-    func finiteAdditionSaturatesBelowUnlimited() {
+    func `finite addition saturates below unlimited`() {
         let maximum = Async.Demand.count(Async.Demand.maximumFiniteCount)
         let saturated = maximum.adding(.count(1))
         #expect(saturated == maximum)
@@ -95,7 +95,7 @@ extension Demand.Test.`Demand operations preserve boundary behavior` {
     }
 
     @Test
-    func subtractionSaturatesAtNone() {
+    func `subtraction saturates at none`() {
         #expect(Async.Demand.count(2).subtracting(.count(5)) == .none)
         #expect(Async.Demand.none.subtracting(.count(1)) == .none)
     }
