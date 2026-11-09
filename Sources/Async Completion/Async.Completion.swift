@@ -7,11 +7,11 @@
         public final class Completion<Success: Sendable, Failure: Swift::Error>: Sendable {
 
             private let _state: Atomic<State>
-            private let _continuation: Async.Mutex<CheckedContinuation<Result, Never>?>
+            private let _outcome: Async.Mutex<Outcome>
 
             public init() {
                 self._state = Atomic(.pending)
-                self._continuation = Async.Mutex(nil)
+                self._outcome = Async.Mutex(Outcome())
             }
         }
     }
@@ -25,8 +25,43 @@
 
     extension Async.Completion {
 
-        public func set(continuation: CheckedContinuation<Result, Never>) {
-            _continuation.withLock { $0 = continuation }
+        fileprivate struct Outcome: Sendable {
+            var waiters: [CheckedContinuation<Result, Never>] = []
+            var result: Result? = nil
+        }
+
+        /// Suspends until the terminal transition and returns its result.
+        ///
+        /// Any number of callers may await, before or after the terminal
+        /// transition; each receives the same result. Task cancellation is
+        /// ignored: a cancelled awaiter keeps waiting.
+        nonisolated(nonsending)
+            public func result() async -> Result
+        {
+            await withCheckedContinuation { continuation in
+                let immediate: Result? = _outcome.withLock { outcome in
+                    if let result = outcome.result {
+                        return result
+                    }
+                    outcome.waiters.append(continuation)
+                    return nil
+                }
+                if let immediate {
+                    continuation.resume(returning: immediate)
+                }
+            }
+        }
+
+        private func finish(_ result: Result) {
+            let waiters = _outcome.withLock { outcome in
+                outcome.result = result
+                let waiters = outcome.waiters
+                outcome.waiters = []
+                return waiters
+            }
+            for waiter in waiters {
+                waiter.resume(returning: result)
+            }
         }
     }
 
@@ -48,12 +83,7 @@
                 ordering: .acquiringAndReleasing
             )
             guard exchanged else { throw .alreadyDone }
-            let cont = _continuation.withLock { cont in
-                let captured = cont
-                cont = nil
-                return captured
-            }
-            cont?.resume(returning: .success(value))
+            finish(.success(value))
         }
 
         public func timeout() throws(Transition.Error) {
@@ -63,12 +93,7 @@
                 ordering: .acquiringAndReleasing
             )
             guard exchanged else { throw .alreadyDone }
-            let cont = _continuation.withLock { cont in
-                let captured = cont
-                cont = nil
-                return captured
-            }
-            cont?.resume(returning: .failure(.timeout))
+            finish(.failure(.timeout))
         }
 
         public func cancel() throws(Transition.Error) {
@@ -86,12 +111,7 @@
                 )
             }
             guard exchanged else { throw .alreadyDone }
-            let cont = _continuation.withLock { cont in
-                let captured = cont
-                cont = nil
-                return captured
-            }
-            cont?.resume(returning: .failure(.cancelled))
+            finish(.failure(.cancelled))
         }
 
         public func fail(_ error: Failure) throws(Transition.Error) {
@@ -102,12 +122,7 @@
                 ordering: .acquiringAndReleasing
             )
             guard exchanged else { throw .alreadyDone }
-            let cont = _continuation.withLock { cont in
-                let captured = cont
-                cont = nil
-                return captured
-            }
-            cont?.resume(returning: .failure(.failure(error)))
+            finish(.failure(.failure(error)))
         }
     }
 

@@ -472,15 +472,14 @@ extension Core.Test.`Promises retain the first fulfilled value` {
         func `Full lifecycle with continuation`() async {
             let completion = Async.Completion<Int, Never>()
 
-            let result = await withCheckedContinuation { continuation in
-                completion.set(continuation: continuation)
-                do {
-                    try completion.start()
-                    try completion.complete(42)
-                } catch {
-                    Issue.record("Unexpected transition error: \(error)")
-                }
+            async let pending = completion.result()
+            do {
+                try completion.start()
+                try completion.complete(42)
+            } catch {
+                Issue.record("Unexpected transition error: \(error)")
             }
+            let result = await pending
 
             if case .success(let value) = result {
                 #expect(value == 42)
@@ -493,15 +492,14 @@ extension Core.Test.`Promises retain the first fulfilled value` {
         func `Cancellation delivers cancellation error`() async {
             let completion = Async.Completion<Int, Never>()
 
-            let result = await withCheckedContinuation { continuation in
-                completion.set(continuation: continuation)
-                do {
-                    try completion.start()
-                    try completion.cancel()
-                } catch {
-                    Issue.record("Unexpected transition error: \(error)")
-                }
+            async let pending = completion.result()
+            do {
+                try completion.start()
+                try completion.cancel()
+            } catch {
+                Issue.record("Unexpected transition error: \(error)")
             }
+            let result = await pending
 
             if case .failure(.cancelled) = result {
 
@@ -514,20 +512,52 @@ extension Core.Test.`Promises retain the first fulfilled value` {
         func `Timeout delivers timeout error`() async {
             let completion = Async.Completion<Int, Never>()
 
-            let result = await withCheckedContinuation { continuation in
-                completion.set(continuation: continuation)
-                do {
-                    try completion.start()
-                    try completion.timeout()
-                } catch {
-                    Issue.record("Unexpected transition error: \(error)")
-                }
+            async let pending = completion.result()
+            do {
+                try completion.start()
+                try completion.timeout()
+            } catch {
+                Issue.record("Unexpected transition error: \(error)")
             }
+            let result = await pending
 
             if case .failure(.timeout) = result {
 
             } else {
                 Issue.record("Expected timeout error, got \(result)")
+            }
+        }
+    }
+
+    extension Core.Test.`Completions enforce their state transitions` {
+        @Test
+        func `Awaiting after the terminal transition returns its result`() async throws {
+            let completion = Async.Completion<Int, Never>()
+            try completion.start()
+            try completion.complete(42)
+
+            let result = await completion.result()
+
+            guard case .success(let value) = result else {
+                Issue.record("Expected success result, got \(result)")
+                return
+            }
+            #expect(value == 42)
+        }
+
+        @Test
+        func `Every awaiter receives the result`() async throws {
+            let completion = Async.Completion<Int, TestError>()
+            async let first = completion.result()
+            async let second = completion.result()
+            try completion.fail(.testFailure)
+            let late = await completion.result()
+
+            for result in await [first, second, late] {
+                guard case .failure(.failure(.testFailure)) = result else {
+                    Issue.record("Expected failure result, got \(result)")
+                    continue
+                }
             }
         }
     }
